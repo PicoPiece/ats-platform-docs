@@ -135,21 +135,22 @@ This model naturally evolves into a hardware test farm.
 
 7. Repository Structure
 This project is intentionally split into multiple repositories:
-ats-platform-docs (this repo)
-System overview, architecture, and roadmap
 
-ats-fw-esp32-demo
-ESP32 firmware designed for automated testing
-
-ats-ats-node
-ATS agent scripts for flashing, testing, audit, and metrics
-
-ats-ci-infra
-Jenkins, Prometheus, and Grafana infrastructure (Docker-based)
+      ats-platform-docs (this repo)
+      System overview, architecture, and roadmap
+      
+      ats-fw-esp32-demo
+      ESP32 firmware designed for automated testing
+      
+      ats-ats-node
+      ATS agent scripts for flashing, testing, audit, and metrics
+      
+      ats-ci-infra
+      Jenkins, Prometheus, and Grafana infrastructure (Docker-based)
 
 Each repository has a single, well-defined responsibility.
 
-8. Project Status & Intent
+9. Project Status & Intent
 This system is:
 A reference architecture
 A foundation for real product adaptation
