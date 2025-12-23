@@ -10,11 +10,14 @@ ats-platform-docs/
 ├── roadmap.md
 └── use-cases.md
 
+## Why This System Exists
+Firmware teams often rely on CI pipelines that stop at build or unit tests, while real hardware validation remains manual, slow, and error-prone. This gap allows firmware regressions, unsafe OTA updates, and hardware-related bugs to escape into the field.
+This ATS is designed to close that gap by bringing real hardware testing directly into the CI/CD workflow.
+
 # Introduce
 Embedded Firmware Automation Test System (ATS)
 
 Overview
-
 This repository documents a production-style Embedded Firmware Automation Test System (ATS) designed to integrate directly with a Jenkins-based CI/CD pipeline and validate firmware on real hardware.
 The system targets embedded and IoT teams who struggle with manual hardware testing, firmware regressions, and unsafe OTA releases, by introducing hardware-in-the-loop (HIL) testing that is automatically triggered on every firmware change.
 This project is intentionally structured as a real internal platform, not a demo toy.
