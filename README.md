@@ -214,17 +214,32 @@ System overview, architecture, and roadmap
 
 ### 🔧 ats-fw-esp32-demo
 
-ESP32 firmware designed for automated testing
+**ESP32 firmware source code and build pipelines**
 
-**Firmware artifacts produced by this repository are validated using `ats-test-esp32-demo`.**
+- Firmware source code (ESP-IDF project)
+- Build pipeline generates firmware binary + `ats-manifest.yaml`
+- Triggers test pipeline asynchronously
+- No test execution logic
+
+**Firmware artifacts produced by this repository are validated using `ats-test-esp32-demo` and `ats-ats-node`.**
 
 ### 🧪 ats-test-esp32-demo
 
-Hardware test execution framework for ESP32
+**Hardware-agnostic test execution framework** for ESP32
+
+- Pure test logic (no hardware interaction)
+- Reads test parameters from `ats-manifest.yaml`
+- Assumes firmware is already flashed
+- Generates structured test results
 
 ### 🏗️ ats-ats-node
 
-ATS agent scripts for flashing, testing, audit, and metrics
+**ATS Node Execution Brain** - Hardware interaction and test orchestration
+
+- Docker container (`ats-node-test`) that owns all hardware interaction
+- Flashing firmware, USB detection, GPIO access
+- Test orchestration and result generation
+- Jenkins is "dumb" - only runs this container
 
 ### 🚀 ats-ci-infra
 
