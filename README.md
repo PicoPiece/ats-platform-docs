@@ -19,7 +19,9 @@ ats-platform-docs/
 │   ├── system-overview.md
 │   ├── ci-flow.md
 │   ├── ci-structure.md
-│   └── ats-node-design.md
+│   ├── ats-node-design.md
+│   ├── ats-manifest-spec-v1.md      # ATS Manifest Schema v1
+│   └── test-output-contract-v1.md   # Test Output Contract v1
 ├── roadmap.md
 └── use-cases.md
 ```
