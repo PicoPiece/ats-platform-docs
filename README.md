@@ -6,6 +6,7 @@ ats-platform-docs/
 ├── architecture/
 │   ├── system-overview.md
 │   ├── ci-flow.md
+│   ├── ci-structure.md
 │   └── ats-node-design.md
 ├── roadmap.md
 └── use-cases.md
