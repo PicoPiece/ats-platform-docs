@@ -87,6 +87,8 @@ Never show:
 ### Panel 3 — Execution
 - validation run ID
 - station lease state
+- lifecycle status: queued / leased / provisioning / booting / testing /
+  recovering / completed / cancelled
 - current test
 - progress bar
 - elapsed time
@@ -132,12 +134,22 @@ Compare against previous validated version:
 ### Panel 7 — Final result
 Show:
 - completed timestamp
+- final status and result as separate fields
 - test counts
 - list of failures
 - deterministic reason
 - AI-assisted summary clearly marked as analysis
 - validation scope
 - report download
+
+Terminal display rules:
+
+- `completed` / `PASS`: declared scope passed;
+- `completed` / `FAIL`: deterministic assertion failure;
+- `completed` / `ERROR`: infrastructure/orchestration prevented a valid result;
+- `cancelled` / `INCOMPLETE`: customer/operator/scheduler stopped the run.
+
+The UI must not label `ERROR` or `INCOMPLETE` as a product regression.
 
 Example:
 

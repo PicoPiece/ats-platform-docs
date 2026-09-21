@@ -16,7 +16,7 @@ Approved statement:
 
 ## Report outputs
 
-Each completed run should produce:
+Each terminal run (`completed` or `cancelled`) should produce:
 
 - `validation-report.json`: machine-readable canonical report;
 - `validation-report.html`: customer-readable report;
@@ -57,6 +57,8 @@ HTML and PDF are views. `validation-report.json` is the source of truth.
 ### 4. Execution summary
 
 - start/end time and duration;
+- final lifecycle status;
+- final result;
 - PASS/FAIL/SKIP counts;
 - infrastructure error count;
 - retry lineage;
@@ -81,6 +83,8 @@ For every test:
 When a compatible baseline exists:
 
 - baseline run identity;
+- current and baseline `BaselineCompatibilityKey` values/hashes;
+- compatibility decision and optional policy ID;
 - new failures;
 - resolved failures;
 - unchanged failures;
@@ -103,6 +107,7 @@ List evidence by:
 - visibility;
 - redaction status;
 - collection timestamp.
+- finalization state.
 
 ### 8. Scope and limitations
 
@@ -215,6 +220,12 @@ must not expose private prompts, credentials, or unrestricted raw customer data.
   "comparison": {
     "baseline_run_id": "run_demo_100_baseline",
     "compatible": true,
+    "compatibility": {
+      "current_key_hash": "sha256:current-key",
+      "baseline_key_hash": "sha256:current-key",
+      "policy_id": "strict-equality-v1",
+      "reason": "Compatibility keys are identical."
+    },
     "new_failures": [
       "linux.boot.ssh_ready",
       "linux.service.demo_health"
@@ -246,7 +257,8 @@ must not expose private prompts, credentials, or unrestricted raw customer data.
       "size_bytes": 12480,
       "visibility": "customer_private",
       "redaction_status": "completed",
-      "collected_at": "2026-10-01T10:31:00Z"
+      "collected_at": "2026-10-01T10:31:00Z",
+      "finalized": true
     }
   ],
   "scope_and_limitations": {
@@ -268,13 +280,26 @@ must not expose private prompts, credentials, or unrestricted raw customer data.
 
 ## Result consistency rules
 
-1. Required test `FAIL` produces run result `FAIL`.
-2. Infrastructure failure that prevents a valid assertion produces `ERROR`.
-3. Required test `SKIP` follows the resolved skip policy.
-4. Counts must match test records.
-5. Baseline metric result must match its declared operator and threshold.
-6. Report result must match canonical run result and low-level result outputs.
-7. Assisted analysis cannot modify deterministic result fields.
+Allowed final status values are `completed` and `cancelled`.
+
+Allowed final result values are `PASS`, `FAIL`, `ERROR`, and `INCOMPLETE`.
+
+1. Required test `FAIL` produces `completed` / `FAIL`.
+2. Infrastructure failure that prevents a valid assertion produces
+   `completed` / `ERROR`.
+3. Customer/operator/scheduler cancellation produces
+   `cancelled` / `INCOMPLETE`.
+4. Station loss produces `completed` / `ERROR` after the control plane
+   finalizes the run.
+5. A declared test-owned timeout may produce `completed` / `FAIL`; an
+   orchestration timeout produces `completed` / `ERROR`.
+6. Required test `SKIP` follows the resolved skip policy.
+7. Counts must match test records.
+8. Baseline comparison is forbidden unless compatibility keys match or an
+   explicit versioned compatibility policy allows it.
+9. Baseline metric result must match its declared operator and threshold.
+10. Report result must match canonical run result and low-level result outputs.
+11. Assisted analysis cannot modify deterministic result fields.
 
 ## Evidence directory
 
@@ -296,6 +321,32 @@ runs/<run_id>/
     ├── metrics/
     └── images/
 ```
+
+## Evidence finalization
+
+`evidence-index.json` contains:
+
+```yaml
+schema_version: 1
+run_id: run_01JEXAMPLE
+finalized: true
+finalized_at: "2026-10-01T10:40:00Z"
+objects:
+  - path: evidence/serial.log
+    size_bytes: 12480
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+```
+
+Before finalization, the collector may append run-scoped evidence. Finalization
+calculates the index and object hashes, sets `finalized: true`, and makes the
+run tree non-writable through both application and filesystem/storage policy.
+
+Any post-finalization correction creates a new version/object and audit event;
+it never silently overwrites evidence referenced by an existing report.
+
+The MVP may use local filesystem permissions and application guards. A later
+S3-compatible backend may use content-addressed object keys, bucket versioning,
+and Object Lock.
 
 ## Public demo redaction
 

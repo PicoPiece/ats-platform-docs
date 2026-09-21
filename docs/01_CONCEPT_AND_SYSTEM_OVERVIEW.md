@@ -65,7 +65,7 @@ Customer Git / Image
 Artifact Ingestion / Yocto Build Farm
         |
         v
-Release Candidate Registry
+Release Registry
         |
         v
 Jenkins / Scheduler
@@ -106,6 +106,13 @@ The platform separates three customer-facing execution entities:
 One release can own multiple artifacts and can be validated by multiple runs on
 different hardware revisions, stations, schedules, or retry attempts.
 
+`ValidationRun.status` and `ValidationRun.result` are separate:
+
+- status tracks lifecycle (`queued` through `completed` or `cancelled`);
+- result is `PASS`, `FAIL`, `ERROR`, or `INCOMPLETE`;
+- cancellation maps to `cancelled` / `INCOMPLETE`;
+- infrastructure failure maps to `completed` / `ERROR`.
+
 Physical execution additionally uses:
 
 - **Station**: one controller, DUT, fixture, and capability set;
@@ -115,6 +122,10 @@ Physical execution additionally uses:
   description;
 - **Baseline**: a reference to a compatible completed run used for regression
   comparison.
+
+Baseline comparison is machine-gated by `BaselineCompatibilityKey`, covering
+platform profile, hardware revision, test-pack versions, metric schema, fixture
+revision, and calibration profile.
 
 Jenkins build numbers may be retained as external references, but they are not
 the primary identity for releases or runs.
@@ -149,6 +160,22 @@ not become one broad `TargetAdapter` god-object.
 - remote power control
 - optional sensors for temperature / environment
 - future test instruments such as Joulescope, USB-CAN, cellular modems, BLE radios
+
+## Untrusted artifact and DUT boundaries
+
+Customer archives remain in quarantine until bounded inspection validates
+member paths, links, file count, extracted size, expansion ratio, and explicit
+expected members. Uploaded archive contents are never executed on the control
+plane.
+
+Customer images run on a dedicated DUT VLAN/interface with default-deny policy:
+
+- no DUT access to Jenkins/control plane;
+- no DUT access to station management or home/office LAN;
+- no cross-DUT/customer traffic;
+- no Internet by default;
+- station runner may access only declared DUT ports;
+- Internet/DNS/NTP requires an explicit restricted network profile.
 
 ## Test taxonomy
 Tests should be reusable by design.

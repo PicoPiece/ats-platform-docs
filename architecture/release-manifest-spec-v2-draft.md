@@ -76,6 +76,7 @@ target:
   runtime:
     required_transports: [ssh]
     readiness_probe: linux.ssh_ready
+    network_access_profile_id: dut-offline-v1
 
 validation:
   test_packs:
@@ -95,6 +96,15 @@ validation:
       max: 10
   baseline:
     run_id: run_01JBASELINE
+    compatibility_key:
+      platform_profile: rpi4-sd-v1
+      hardware_revision: "1.5"
+      test_packs:
+        - id: linux-core
+          version: 0.1.0
+      metric_schema: 1
+      fixture_revision: fixture-v1
+      calibration_profile: none
   policies:
     required_test_failure: fail
     infrastructure_error: error
@@ -126,6 +136,7 @@ Artifact:
 - role and media type;
 - positive size;
 - lowercase SHA-256 with 64 hexadecimal characters.
+- archive intake policy ID when the artifact is an archive.
 
 Target:
 
@@ -133,6 +144,7 @@ Target:
 - board identifier;
 - provisioning strategy;
 - mapping from provisioning input names to artifact roles.
+- network access profile for DUT execution.
 
 Validation:
 
@@ -181,7 +193,9 @@ Before acquiring a station, the platform creates a run snapshot containing:
 - resolved test-pack versions;
 - resolved thresholds;
 - selected baseline run;
-- hardware compatibility constraints.
+- resolved `BaselineCompatibilityKey`;
+- hardware compatibility constraints;
+- resolved DUT network access profile and firewall policy revision.
 
 Later edits to a draft release cannot affect an existing run.
 
@@ -211,6 +225,16 @@ Before a release becomes `ready`:
 - never execute scripts contained in an uploaded image on the control plane;
 - enforce storage retention and tenant namespace;
 - record the validation decision in audit history.
+
+Archive artifacts must satisfy
+[Artifact Intake Security Policy v1](./artifact-intake-security-policy-v1.md),
+including extraction limits, path/link validation, expected-member policy, and
+decompression-bomb protection.
+
+Every external image executes under a resolved
+[DUT Network Security Policy](./dut-network-security-policy-v1.md) profile.
+Default policy denies DUT access to the control plane, home/office LAN, other
+DUTs, and the Internet.
 
 Customer cryptographic artifact signatures are optional for MVP. A pre-signed
 upload URL authorizes transport; it does not prove artifact publisher identity.

@@ -238,6 +238,15 @@ Responsibilities:
 - write an evidence index;
 - finalize evidence as read-only.
 
+Finalization contract:
+
+- every indexed object has path/object key, size, and SHA-256;
+- index has `finalized: true` and finalization timestamp;
+- application and storage policy reject in-place mutation afterward;
+- corrections create a new version/object plus audit event;
+- future content-addressed/object-lock storage can replace the local backend
+  without changing evidence references.
+
 Evidence visibility:
 
 - `public_demo`;
@@ -247,6 +256,16 @@ Evidence visibility:
 
 The collector does not determine test results. It preserves the evidence used by
 deterministic assertions and later analysis.
+
+## DUT network enforcement
+
+Before powering an uploaded image, the orchestrator applies the resolved
+`NetworkAccessProfile` and records its policy revision in the run snapshot.
+Default policy denies DUT access to the control plane, station management,
+home/office LAN, other DUTs, and the Internet.
+
+Network policy failure is an infrastructure error. See
+[DUT Network Security Policy v1](./dut-network-security-policy-v1.md).
 
 ## Station orchestrator
 
@@ -286,9 +305,9 @@ Adapters return one of:
 - `timeout`;
 - `cancelled`.
 
-`test_failure` contributes to result `FAIL`. Infrastructure categories normally
-produce `ERROR`, not `FAIL`, unless a declared test explicitly evaluates that
-condition.
+`test_failure` contributes to `completed` / `FAIL`. Infrastructure categories
+normally produce `completed` / `ERROR`, unless a declared test explicitly
+evaluates that condition. Cancellation produces `cancelled` / `INCOMPLETE`.
 
 ## ESP32 compatibility
 

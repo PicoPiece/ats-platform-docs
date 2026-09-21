@@ -73,6 +73,8 @@ Optional fields:
 - customer-provided signature metadata.
 
 Artifact bytes are immutable. Replacing bytes requires a new `artifact_id`.
+Uploaded artifacts remain in quarantine until they satisfy
+[Artifact Intake Security Policy v1](./artifact-intake-security-policy-v1.md).
 
 ### ValidationRun
 
@@ -88,12 +90,16 @@ Required fields:
 - `hardware_config_id`;
 - `platform_profile_id`;
 - `test_pack_versions`;
+- `baseline_compatibility_key`;
+- `network_access_profile_id` and firewall policy revision;
 - resolved thresholds;
-- `created_at`, `started_at`, and `completed_at`;
+- `created_at`;
+- nullable `started_at` and `completed_at`, populated by lifecycle;
 - `status`;
 - `result`;
 - `trigger_type`: `manual`, `ci`, `scheduled`, or `retry`;
 - `evidence_root`;
+- evidence index finalization state and checksum;
 - `report_uri`.
 
 Optional fields:
@@ -108,28 +114,63 @@ Run status:
 
 ```text
 queued
-  -> leasing
+  -> leased
   -> provisioning
   -> booting
   -> testing
-  -> collecting
   -> completed
 ```
 
-Exceptional states:
+Recovery and cancellation transitions:
 
 ```text
-any active state -> recovering -> resumed or failed
+leased | provisioning | booting | testing -> recovering
+recovering -> provisioning | booting | testing | completed
 any active state -> cancelled
-any active state -> infrastructure_error
 ```
 
-Result is separate from status:
+### ValidationRun status and result
+
+`status` records lifecycle progress. `result` records the validation outcome.
+They are separate fields and must never be inferred from one combined enum.
+
+Allowed status values:
+
+- `queued`;
+- `leased`;
+- `provisioning`;
+- `booting`;
+- `testing`;
+- `recovering`;
+- `completed`;
+- `cancelled`.
+
+`result` is `null` while a run is active. Terminal result values:
 
 - `PASS`: all required deterministic assertions passed;
 - `FAIL`: at least one required assertion failed;
-- `ERROR`: execution could not establish a valid result;
-- `CANCELLED`: run intentionally stopped.
+- `ERROR`: infrastructure or orchestration failure prevented a valid result;
+- `INCOMPLETE`: execution intentionally stopped before a valid result.
+
+Required terminal mappings:
+
+| Condition | Final status | Final result |
+|---|---|---|
+| All required assertions pass | `completed` | `PASS` |
+| A required deterministic assertion fails | `completed` | `FAIL` |
+| Provision, station, transport, or orchestration timeout | `completed` | `ERROR` |
+| Station lost and run cannot safely resume | `completed` | `ERROR` |
+| Customer abort | `cancelled` | `INCOMPLETE` |
+| Operator cancellation | `cancelled` | `INCOMPLETE` |
+| Scheduler cancellation before execution | `cancelled` | `INCOMPLETE` |
+| Test assertion intentionally checks a timeout and fails | `completed` | `FAIL` |
+
+An infrastructure timeout is not automatically a test failure. A test timeout
+is `FAIL` only when the declared deterministic assertion owns that timeout.
+
+Cancellation still triggers bounded cleanup/recovery. If cleanup also fails,
+the run remains `cancelled` / `INCOMPLETE`; the cleanup failure is recorded as
+an infrastructure incident and may quarantine the station.
 
 ### Station
 
@@ -199,12 +240,35 @@ new hardware configuration.
 A baseline is a reference to a completed, eligible `ValidationRun`; it is not a
 copy of test results.
 
-A baseline is valid only when comparison dimensions are compatible:
+Every completed run stores a `BaselineCompatibilityKey`:
 
-- same hardware configuration or an explicitly allowed compatibility group;
-- same test semantic version or declared comparison compatibility;
-- same metric definition and unit;
-- same relevant station calibration.
+```yaml
+platform_profile: rpi4-sd-v1
+hardware_revision: "1.5"
+test_packs:
+  - id: linux-core
+    version: 0.1.0
+metric_schema: 1
+fixture_revision: fixture-v1
+calibration_profile: none
+```
+
+The canonical key sorts test packs by ID and is stored with a deterministic
+hash. Automatic comparison is allowed only when baseline and current keys are
+identical.
+
+An explicitly versioned compatibility policy may allow a controlled exception,
+for example two hardware revisions proven equivalent for a specific metric
+schema. The policy ID and decision reason become report data. The runner/report
+must never silently compare incompatible keys.
+
+At minimum the key covers:
+
+- platform profile and hardware revision;
+- complete test-pack ID/version set;
+- metric schema;
+- fixture revision;
+- relevant calibration profile.
 
 ## Relationships
 
@@ -232,15 +296,23 @@ ValidationRun
 3. A run snapshots all resolved inputs before provisioning starts.
 4. A report generated after completion references the immutable run snapshot.
 5. Retrying creates a new run with `parent_run_id`; it never overwrites history.
-6. Evidence may be appended while a run is active but becomes read-only after
-   finalization.
+6. Evidence may be appended while a run is active. Finalization writes an
+   evidence index containing each object SHA-256, size, and path, then sets
+   `finalized: true`. Application and filesystem policy must reject mutation
+   after finalization.
 7. Customer deletion and retention workflows remove storage according to policy
    while preserving only legally permitted audit metadata.
+
+The MVP may enforce evidence immutability with permissions and application
+guards. A later object-store backend may add content-addressed keys, versioning,
+and Object Lock without changing report semantics.
 
 ## Baseline comparison model
 
 Each metric comparison records:
 
+- baseline and current `BaselineCompatibilityKey` hashes;
+- compatibility decision and optional policy ID;
 - metric ID and unit;
 - baseline value;
 - current value;

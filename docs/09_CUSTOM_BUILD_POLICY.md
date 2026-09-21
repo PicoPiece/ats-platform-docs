@@ -25,8 +25,10 @@ Customer supplies immutable artifacts and metadata.
 Picopiece:
 
 - verifies size/type/SHA-256;
+- inspects archives under bounded expected-member policy;
 - registers release and artifacts;
 - provisions declared hardware;
+- executes the DUT under an explicit default-deny network profile;
 - runs agreed tests;
 - returns evidence and report.
 

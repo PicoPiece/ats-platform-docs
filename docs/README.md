@@ -50,7 +50,9 @@ Located under [`../architecture/`](../architecture/):
   StationLease, and baseline model;
 - `station-runtime-interfaces-v1.md` — platform/runtime adapter boundaries;
 - `release-manifest-spec-v2-draft.md` — multi-artifact release draft;
-- `station-lease-contract-v1.md` — exclusive station ownership and fencing.
+- `station-lease-contract-v1.md` — exclusive station ownership and fencing;
+- `artifact-intake-security-policy-v1.md` — untrusted upload/archive controls;
+- `dut-network-security-policy-v1.md` — default-deny customer DUT network.
 
 ## Near-term milestone order
 

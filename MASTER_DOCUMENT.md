@@ -2,6 +2,10 @@
 
 > **Tài liệu tổng hợp giải thích chi tiết cách hệ thống ATS hoạt động**
 
+> **Status:** Đây là snapshot mô tả ESP32 POC. Các contract trong
+> `architecture/` và planning pack trong `docs/` là nguồn thiết kế hiện hành
+> cho Validation Lab. Nếu có khác biệt, contract versioned được ưu tiên.
+
 ## Mục Lục
 
 1. [Tổng Quan Hệ Thống](#tổng-quan-hệ-thống)

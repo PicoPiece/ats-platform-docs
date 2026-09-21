@@ -57,6 +57,11 @@ MVP transport:
 A customer cryptographic artifact signature is optional unless the engagement
 requires it.
 
+Archive artifacts such as `.tar` require an approved archive profile defining
+expected members, extracted-size/file-count limits, path/link rules, and nested
+archive behavior. Archives are inspected in quarantine and never executed.
+See `../architecture/artifact-intake-security-policy-v1.md`.
+
 ### Managed build mode — conditional
 
 Managed build is not the default first evaluation. It requires paid discovery
@@ -146,6 +151,12 @@ Customer provides only what the declared test scope requires:
 - inbound connectivity requirements;
 - certificate and clock requirements.
 
+Every engagement selects a `NetworkAccessProfile`. The default denies DUT
+access to the control plane, home/office LAN, other DUTs, and the Internet.
+Required Internet/DNS/NTP access must be explicit, destination-restricted,
+logged, and approved. See
+`../architecture/dut-network-security-policy-v1.md`.
+
 Credentials:
 
 - are stored server-side in approved secret storage;
@@ -210,6 +221,12 @@ Comparison requires compatible:
 - test semantics/version;
 - metric units;
 - station calibration where relevant.
+
+Compatibility is enforced with a machine-readable
+`BaselineCompatibilityKey`, including platform profile, hardware revision,
+test-pack versions, metric schema, fixture revision, and calibration profile.
+No automatic comparison occurs when keys differ unless an explicit versioned
+compatibility policy allows it.
 
 Threshold examples:
 

@@ -187,6 +187,7 @@ Result: FAIL
 - selected baseline is compatible;
 - known-good recovery artifact available;
 - test network and redaction policy active.
+- resolved DUT network profile blocks control, management, and home networks.
 
 ### Run known-good release
 
@@ -213,6 +214,11 @@ Repeat the exact same process with:
 - same platform profile;
 - same test-pack version;
 - same thresholds.
+
+The baseline and current run must have identical
+`BaselineCompatibilityKey` values. If the platform profile, hardware revision,
+test-pack set/version, metric schema, fixture revision, or calibration profile
+differs, the demo reports comparison unavailable instead of a regression.
 
 Expected deterministic failures:
 

@@ -23,6 +23,8 @@ ats-platform-docs/
 │   ├── validation-domain-model-v1.md
 │   ├── station-runtime-interfaces-v1.md
 │   ├── station-lease-contract-v1.md
+│   ├── artifact-intake-security-policy-v1.md
+│   ├── dut-network-security-policy-v1.md
 │   └── release-manifest-spec-v2-draft.md
 ```
 
@@ -268,6 +270,10 @@ The platform evolves from the ESP32 POC using these additional contracts:
   boundaries;
 - `station-lease-contract-v1.md`: provides exclusive station ownership,
   heartbeat, expiry, and fencing;
+- `artifact-intake-security-policy-v1.md`: treats customer uploads and archives
+  as untrusted input;
+- `dut-network-security-policy-v1.md`: enforces a default-deny DUT network
+  boundary before external artifact execution;
 - `release-manifest-spec-v2-draft.md`: models multi-artifact Embedded Linux
   releases while Manifest v1 remains supported.
 

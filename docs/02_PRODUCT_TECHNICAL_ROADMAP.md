@@ -40,9 +40,10 @@ These milestones are execution gates inside the calendar phases below.
 
 - pre-signed upload URL;
 - size/type/SHA-256 validation;
-- quarantine and retention;
+- quarantine, bounded archive inspection, and retention;
 - first-class Release, Artifact, ValidationRun, Station, and StationLease;
 - capability-aware scheduling;
+- default-deny DUT VLAN/firewall and explicit network access profiles;
 - external Pi-compatible artifact uses the same provision/test/report path.
 
 ### M3 — First customer pilot

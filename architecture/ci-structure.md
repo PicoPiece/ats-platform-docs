@@ -416,5 +416,7 @@ ats-net (bridge network)
 - [Validation Domain Model](./validation-domain-model-v1.md)
 - [Station Runtime Interfaces](./station-runtime-interfaces-v1.md)
 - [Station Lease Contract](./station-lease-contract-v1.md)
+- [Artifact Intake Security Policy](./artifact-intake-security-policy-v1.md)
+- [DUT Network Security Policy](./dut-network-security-policy-v1.md)
 - [Release Manifest v2 Draft](./release-manifest-spec-v2-draft.md)
 

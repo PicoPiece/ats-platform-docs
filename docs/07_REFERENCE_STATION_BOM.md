@@ -122,12 +122,26 @@ ratings and protection.
 ### Network
 
 - wired Gigabit Ethernet switch;
-- dedicated station/DUT network segment or VLAN;
+- dedicated DUT VLAN or physically separate test interface;
+- firewall/router enforcing default-deny policy;
 - DHCP reservation or controlled discovery;
-- firewall policy for DUT outbound access;
+- approved DNS/NTP proxy or services when required;
+- connection and bandwidth limits;
 - backup network path for station controller if practical.
 
-Customer images must not share an unrestricted trusted home or office LAN.
+Required default policy:
+
+- DUT to home/office LAN: deny;
+- DUT to Jenkins/control plane: deny;
+- DUT to station management: deny;
+- DUT to other DUTs/tenants: deny;
+- DUT to Internet: deny;
+- station runner to DUT: allow only required test ports;
+- IPv4 and IPv6 follow equivalent policy.
+
+Customer-required Internet access uses an explicit restricted
+`NetworkAccessProfile`; it is never enabled globally. See
+`../architecture/dut-network-security-policy-v1.md`.
 
 ### Reliability and evidence
 
@@ -152,7 +166,13 @@ Station controller
   |-- USB/network -> power relay -> Pi 4 PSU
   |-- USB/network -> webcam
   |
-  +-- isolated test network -> Pi 4 Ethernet
+  +-- DUT interface -> firewall/DUT VLAN -> Pi 4 Ethernet
+
+Firewall
+  X-- trusted control network
+  X-- home/office LAN
+  X-- Internet by default
+  +-- approved services by explicit profile
 
 Raspberry Pi 4 DUT
 ```

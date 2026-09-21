@@ -29,6 +29,15 @@ Operational runs may currently contain extra files such as
 this v1 contract. The future EvidenceCollector will index such files explicitly
 without breaking existing CI consumers.
 
+V1 has a legacy two-value summary status and exit-code model:
+
+- exit `0` maps to run `completed` / result `PASS`;
+- exit `1` maps to run `completed` / result `FAIL`;
+- exit `2` maps to run `completed` / result `ERROR`.
+
+V1 does not represent cancellation. The Validation Lab domain/report contract
+uses `cancelled` / `INCOMPLETE` without changing this frozen low-level format.
+
 ---
 
 ## Directory Structure

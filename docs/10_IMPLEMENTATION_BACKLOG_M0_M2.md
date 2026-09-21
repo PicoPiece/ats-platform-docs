@@ -109,6 +109,8 @@ issues remain blocked until station reactivation.
 - Acceptance:
   - every run has isolated evidence root;
   - boot/serial logs are declared in evidence index;
+  - index records size/SHA-256 and `finalized: true`;
+  - application/storage rejects in-place mutation after finalization;
   - required low-level result files remain compatible with v1;
   - evidence finalization prevents later accidental overwrite.
 
@@ -290,7 +292,9 @@ issues remain blocked until station reactivation.
 - Dependencies: M1-10
 - Scope: compare eligible run metrics and test outcomes.
 - Acceptance:
-  - hardware/test compatibility is checked;
+  - canonical `BaselineCompatibilityKey` is stored and hashed;
+  - strict key equality is the default machine rule;
+  - any compatibility exception has an explicit versioned policy ID;
   - new/resolved/unchanged failures are classified;
   - absolute and percentage deltas are correct;
   - incompatible baseline reports a reason instead of comparing.
@@ -380,7 +384,12 @@ issues remain blocked until station reactivation.
 - Scope: pre-signed upload, quarantine, size/type/SHA-256, retention.
 - Acceptance:
   - mismatched size/hash is rejected;
-  - path traversal/unsupported type is rejected;
+  - unsupported media type is rejected;
+  - archive absolute paths, traversal, escaping links, and special files are
+    rejected;
+  - extracted size, file count, nesting, and expansion ratio limits prevent
+    decompression bombs;
+  - archive members must match an explicit expected-member policy;
   - upload authorization is distinct from artifact signature;
   - artifact is immutable after acceptance.
 
@@ -449,13 +458,29 @@ issues remain blocked until station reactivation.
 
 - Priority: P0
 - Repository: operations
-- Dependencies: M2-01 through M2-07
+- Dependencies: M2-01 through M2-07, M2-09
 - Scope: one external image, one declared Pi-compatible DUT/profile, one report.
 - Acceptance:
   - artifact follows upload/quarantine path;
   - run uses station lease and immutable snapshot;
   - report and evidence are delivered;
   - customer feedback and next-step decision are recorded.
+
+### M2-09 — Enforce DUT network security profile
+
+- Priority: P0
+- Repository: station/network infrastructure
+- Dependencies: DUT network security contract, M1-01
+- Scope: place uploaded-image DUTs on a dedicated VLAN/interface with
+  default-deny firewall and immutable `NetworkAccessProfile`.
+- Acceptance:
+  - DUT cannot reach Jenkins/control plane, station management, home/office
+    LAN, other DUTs, or Internet under the default profile;
+  - station runner reaches only declared DUT ports;
+  - IPv4 and IPv6 policy are equivalent;
+  - restricted DNS/NTP/Internet profiles allow only approved destinations;
+  - bandwidth/connection limits and policy-violation evidence work;
+  - network profile ID and firewall revision are pinned in the run snapshot.
 
 ## Explicitly deferred after M2
 
