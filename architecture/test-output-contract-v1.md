@@ -12,6 +12,23 @@ The ATS test execution produces a **standardized output structure** in the `/res
 
 **This contract is the ONLY way test results are communicated to CI systems.**
 
+## Applicability
+
+This is the current low-level CI output contract for the ESP32 POC. It remains
+stable during the M0 refactor.
+
+The customer-facing validation report, multi-artifact release identity,
+baseline comparison, evidence index, and station/run IDs are defined separately
+in:
+
+- [Validation Domain Model v1](./validation-domain-model-v1.md);
+- [`../docs/05_VALIDATION_REPORT_SCHEMA_V1.md`](../docs/05_VALIDATION_REPORT_SCHEMA_V1.md).
+
+Operational runs may currently contain extra files such as
+`boot_messages.log`, `metrics.json`, and `.exitcode`. They are not required by
+this v1 contract. The future EvidenceCollector will index such files explicitly
+without breaking existing CI consumers.
+
 ---
 
 ## Directory Structure

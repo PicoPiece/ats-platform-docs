@@ -4,6 +4,22 @@
 
 The ATS CI/CD infrastructure is built on Jenkins with a multi-platform, scalable architecture. It uses **Configuration as Code (JCasC)** for automated Jenkins setup and supports multiple hardware platforms (ESP32, Raspberry Pi, nRF52, etc.) through a folder-based organization.
 
+## Implementation status
+
+This document distinguishes current implementation from planned structure.
+
+Current as-built path:
+
+- ESP32 firmware build job on the `fw-build` agent;
+- ESP32 test job on the `raspi-ats-01` station agent;
+- `ats-node-test` container owns flash, UART, orchestration, and result output;
+- Jenkins archives artifacts/results and publishes JUnit;
+- Raspberry Pi and nRF52 folders exist, but production jobs/adapters are not
+  implemented.
+
+Multi-platform folder structure is an extension point, not evidence that every
+platform is operational.
+
 ## Architecture Components
 
 ### 1. Jenkins Infrastructure
@@ -48,7 +64,7 @@ ats-ci-infra/
 - **Grafana** (`grafana`)
   - Visualization and dashboards
   - Exposes UI on port `3000`
-  - Default credentials: `admin/admin`
+  - Credentials configured through environment variables
 
 ### 2. Jenkins Folder Structure
 
@@ -61,9 +77,9 @@ Jenkins UI
     │   ├── ats-fw-esp32-demo              # Build pipeline
     │   └── ats-fw-esp32-demo-ESP32-test   # Test pipeline
     ├── RaspberryPi/
-    │   └── (future: image build jobs)
+    │   └── (folder only; build/test jobs planned)
     └── nRF52/
-        └── (future: nRF52 build jobs)
+        └── (folder only; build/test jobs planned)
 ```
 
 This structure enables:
@@ -129,32 +145,34 @@ Location: `platforms/{PLATFORM}/Jenkinsfile.test`
 **Purpose**: Test firmware on ATS hardware nodes
 
 **Stages**:
-1. **Copy Firmware Artifact**
-   - Agent: `ats-node` (or custom label)
-   - Copies firmware and manifest from build job
-   - Validates artifact presence
+1. **Prepare Workspace**
+   - Runs on the selected station label.
+   - Copies firmware and Manifest v1 from the build job.
+   - Checks out the external test-pack repository.
 
-2. **Flash Firmware**
-   - Agent: `ats-node`
-   - Executes `flash_fw.sh` script
-   - Flashes firmware to ESP32 device
+2. **Prepare Runner Image**
+   - Builds/verifies the latest `ats-node-test` image.
 
-3. **Run Tests**
-   - Agent: `ats-node`
-   - Executes `run_tests.sh` script
-   - Captures test results and logs
+3. **Run ATS Container**
+   - Copies workspace data into a Docker volume for the current nested-Docker
+     setup.
+   - Runs one station container that owns flash, UART, test execution, and
+     result generation.
+   - Current POC uses privileged hardware access; least-privilege hardening is
+     planned, not complete.
 
-4. **Archive Test Reports**
-   - Agent: `ats-node`
-   - Archives test reports
-   - Publishes test results (JUnit XML format)
+4. **Archive and Publish**
+   - Copies results back to the Jenkins workspace.
+   - Archives result artifacts.
+   - Publishes JUnit.
+   - Maps exit code `1` to unstable/test failure and execution errors to failed.
 
 **Parameters**:
 - `BUILD_JOB_NAME`: Full path to build job (e.g., `platforms/ESP32/ats-fw-esp32-demo`)
 - `BUILD_NUMBER`: Build number to test
-- `FW_ARTIFACT`: Firmware artifact name
-- `PLATFORM`: Platform name
-- `ATS_NODE_LABEL`: Label for ATS node pool (default: `ats-node`)
+- `ATS_NODE_LABEL`: Station label (current default: `raspi-ats-01`)
+- `ATS_NODE_TEST_IMAGE`: Runner container image
+- `TEST_REPO_URL` and `TEST_REPO_BRANCH`: Test-pack source
 
 ### 4. Build Agent Setup
 
@@ -252,11 +270,10 @@ platforms/
 │   ├── Jenkinsfile          # ESP32 build pipeline
 │   └── Jenkinsfile.test     # ESP32 test pipeline
 ├── RaspberryPi/
-│   ├── Jenkinsfile          # Raspberry Pi image build
-│   └── Jenkinsfile.test     # Raspberry Pi test
+│   ├── Jenkinsfile          # Current placeholder/stub
+│   └── Jenkinsfile.test     # Planned; not currently present
 └── nRF52/
-    ├── Jenkinsfile          # nRF52 build pipeline
-    └── Jenkinsfile.test     # nRF52 test pipeline
+    └── Planned
 ```
 
 #### Adding a New Platform
@@ -266,12 +283,13 @@ platforms/
    mkdir -p platforms/NewPlatform
    ```
 
-2. **Create Jenkinsfiles**:
-   - Copy `platforms/ESP32/Jenkinsfile` as template
-   - Update `PLATFORM` environment variable
-   - Adjust build commands for new platform
+2. **Implement platform contracts**:
+   - Define `PlatformProfile`.
+   - Implement Provisioner, PowerController, ConsoleTransport,
+     RuntimeTransport, and RecoveryStrategy.
+   - Version the TestPack and evidence requirements.
 
-3. **Update JCasC Config**:
+3. **Create build/test pipelines and update JCasC**:
    - Add folder definition in `jenkins/jcasc/jenkins.yaml`
    - Add build and test job definitions
    - Restart Jenkins
@@ -285,9 +303,10 @@ platforms/
 
 #### Build Artifacts
 
-- **Firmware Binary**: `firmware-{PLATFORM}.bin`
-- **ATS Manifest**: `ats-manifest.yaml`
-- **Build Logs**: Stored in Jenkins build history
+- **Current ESP32:** `firmware-esp32.bin` + Manifest v1
+- **Planned Embedded Linux:** a Release with one or more role-addressed
+  artifacts such as `.wic.bz2`, `.wic.bmap`, package manifest, SBOM, and logs
+- **Build Logs:** stored in Jenkins today; external immutable storage is planned
 
 #### Artifact Flow
 
@@ -380,17 +399,22 @@ ats-net (bridge network)
 
 ### 11. Future Enhancements
 
-- **Multi-Agent Pools**: Support multiple build agents per platform
-- **Parallel Testing**: Run tests on multiple ATS nodes simultaneously
-- **Artifact Storage**: External artifact storage (S3, Artifactory)
-- **Pipeline Templates**: Shared library for common pipeline stages
-- **Webhook Integration**: Auto-trigger on Git push/PR
+- First-class Release, Artifact, and ValidationRun persistence
+- StationLease with heartbeat, expiry, and fencing
+- Capability-aware scheduling and multi-station pools
+- External immutable artifact/evidence storage
+- Pipeline templates/shared library
+- Webhook and pre-signed artifact intake
+- Raspberry Pi 4 reference validation
 
 ---
 
 ## Related Documentation
 
 - [System Overview](../README.md)
-- [CI Flow](./ci-flow.md)
-- [ATS Node Design](./ats-node-design.md)
+- [System Implementation](./system-implementation.md)
+- [Validation Domain Model](./validation-domain-model-v1.md)
+- [Station Runtime Interfaces](./station-runtime-interfaces-v1.md)
+- [Station Lease Contract](./station-lease-contract-v1.md)
+- [Release Manifest v2 Draft](./release-manifest-spec-v2-draft.md)
 

@@ -4,6 +4,27 @@
 
 This document provides a complete overview of the ATS Center system implementation, including architecture, security improvements, observability setup, and test framework enhancements.
 
+## Status and scope
+
+The working implementation is the ESP32 POC. Raspberry Pi 4 validation,
+Release Registry, StationLease, customer artifact intake, and private dashboard
+are planned architecture.
+
+Some sections below describe improvement targets. A target is not considered
+implemented until it is confirmed by the current repository code and an
+end-to-end run. In particular:
+
+- the current ESP32 test pipeline still launches the runner with privileged
+  hardware access and broad `/dev` mounts;
+- the station runner currently contains ESP32-specific orchestration and test
+  workarounds;
+- the physical station is temporarily offline during relocation;
+- Prometheus/Grafana infrastructure exists, but the customer-facing Validation
+  Lab dashboard is not yet implemented.
+
+The contracts in this repository define the target boundaries without claiming
+that the code already satisfies them.
+
 ---
 
 ## Table of Contents
@@ -108,13 +129,17 @@ environment:
 
 ### 2. Container Privileges Reduction
 
-**Before:**
+**Current POC:**
 - Containers run with `--privileged` flag (full system access)
+- The test pipeline mounts broad device access for ESP32 flashing/UART
+- This is acceptable only as a controlled POC limitation
 
-**After:**
+**Target hardening:**
 - Specific capabilities: `--cap-add=SYS_RAWIO`, `--cap-add=SYS_ADMIN`
-- Specific device mounts: `--device=/dev/ttyUSB0`
+- Specific devices resolved from a station allow-list
 - Read-only mounts where possible: `-v /sys/class/gpio:/sys/class/gpio:ro`
+- Dedicated station worker and per-adapter access policy
+- StationLease fencing before destructive hardware actions
 
 **Security Benefits:**
 - Reduced attack surface
@@ -306,10 +331,11 @@ Success Rate: 66%
    - Prometheus configuration
    - Grafana dashboards and provisioning
 
-5. **ats-ats-node** - Hardware access tools (future)
-   - Placeholder for Python-based tools
-   - Future: Advanced hardware abstraction
-   - Current: Shell scripts in ats-test-esp32-demo
+5. **ats-ats-node** - Current station execution brain
+   - Python manifest loader, ESP32 flash/reset, executor, and result writers
+   - Dockerized hardware access and test orchestration
+   - Planned refactor into narrow station runtime interfaces
+   - Invokes the external test pack from `ats-test-esp32-demo`
 
 ---
 
@@ -340,7 +366,7 @@ Success Rate: 66%
 
 3. **Start Services:**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Verify:**
@@ -484,19 +510,22 @@ Success Rate: 66%
 ## Future Enhancements
 
 ### Planned Improvements
-- [ ] Parallel test execution across multiple ATS nodes
-- [ ] External artifact storage (S3/Artifactory)
-- [ ] Webhook integration for GitHub
-- [ ] Visual validation with camera + AI
-- [ ] Advanced test parameterization
-- [ ] Test suite management
-- [ ] Alerting rules for Prometheus
+- [ ] Refactor ESP32 through `PlatformProfile`, Provisioner, power, console,
+      runtime, recovery, TestPack, and EvidenceCollector boundaries
+- [ ] Remove runtime test-script mutation and executor hardcoded pass strings
+- [ ] Reactivate station and complete 10-run ESP32 soak
+- [ ] Raspberry Pi 4 provision/boot/SSH/Linux Core validation
+- [ ] Known-good baseline comparison and canonical validation report
+- [ ] Release/Artifact/ValidationRun persistence
+- [ ] StationLease and capability-aware scheduling
+- [ ] Pre-signed external artifact intake
+- [ ] Public reference dashboard using sanitized real data
 
 ### Architecture Evolution
-- [ ] Kubernetes deployment option
-- [ ] Multi-region support
-- [ ] Cloud-based ATS nodes
-- [ ] Enhanced firmware features (GPIO, OLED, OTA demos)
+- [ ] External immutable artifact/evidence storage
+- [ ] Customer authentication and tenant isolation after first pilot
+- [ ] Managed customer Yocto build when prospect demand justifies it
+- [ ] Additional platform adapters only when requested by real customers
 
 ---
 
@@ -504,10 +533,15 @@ Success Rate: 66%
 
 - [System Overview](../README.md)
 - [CI Structure](./ci-structure.md)
+- [Validation Domain Model](./validation-domain-model-v1.md)
+- [Station Runtime Interfaces](./station-runtime-interfaces-v1.md)
+- [Station Lease Contract](./station-lease-contract-v1.md)
+- [Release Manifest v2 Draft](./release-manifest-spec-v2-draft.md)
+- [Planning Pack](../docs/README.md)
 - [Repository READMEs](../README.md)
 
 ---
 
-**Last Updated:** $(date -u +%Y-%m-%d)  
-**Version:** 1.0  
+**Last Updated:** 2026-09-20
+**Version:** 1.1
 **Author:** ATS Platform Team

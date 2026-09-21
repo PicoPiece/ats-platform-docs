@@ -12,6 +12,25 @@ The `ats-manifest.yaml` is the **single source of truth** for firmware test exec
 
 **This manifest is the ONLY contract between components. No hardcoded assumptions allowed.**
 
+## Applicability
+
+Manifest v1 is the current stable contract for the ESP32 POC. It models one
+build and one primary firmware artifact.
+
+It does not model:
+
+- first-class Release, Artifact, or ValidationRun IDs;
+- multiple artifacts per release;
+- station leases or hardware configuration identity;
+- test-pack versions and resolved thresholds;
+- baseline comparison;
+- managed-build provenance.
+
+These requirements are described in
+[Release Manifest v2 Draft](./release-manifest-spec-v2-draft.md) and
+[Validation Domain Model v1](./validation-domain-model-v1.md). V2 is a design
+draft and does not replace V1 until implementation and migration are complete.
+
 ---
 
 ## Schema Definition

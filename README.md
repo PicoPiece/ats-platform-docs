@@ -16,15 +16,19 @@ This project is intentionally structured as a real internal platform, not a demo
 ats-platform-docs/
 ├── README.md
 ├── architecture/
-│   ├── system-overview.md
-│   ├── ci-flow.md
 │   ├── ci-structure.md
-│   ├── ats-node-design.md
+│   ├── system-implementation.md
 │   ├── ats-manifest-spec-v1.md      # ATS Manifest Schema v1
-│   └── test-output-contract-v1.md   # Test Output Contract v1
-├── roadmap.md
-└── use-cases.md
+│   ├── test-output-contract-v1.md   # Test Output Contract v1
+│   ├── validation-domain-model-v1.md
+│   ├── station-runtime-interfaces-v1.md
+│   ├── station-lease-contract-v1.md
+│   └── release-manifest-spec-v2-draft.md
 ```
+
+The product/business planning pack is maintained in the
+[`docs/`](docs/) directory, including report, onboarding, hardware, demo,
+custom build, and implementation backlog documents.
 
 ---
 
@@ -88,9 +92,10 @@ The ATS is split into three clearly separated planes:
 
 ### Device Under Test (DUT)
 
-- **ESP32** running test firmware
-- **GPIO outputs / inputs**
-- **I2C OLED display**
+- **Current POC:** ESP32 running test firmware
+- **M1 reference target:** Raspberry Pi 4 running an internal Embedded Linux
+  image
+- Future customer-specific Linux/firmware targets
 
 ### Benefits of This Separation
 
@@ -250,6 +255,24 @@ Jenkins, Prometheus, and Grafana infrastructure (Docker-based)
 ---
 
 Each repository has a single, well-defined responsibility.
+
+---
+
+## Validation Lab contracts
+
+The platform evolves from the ESP32 POC using these additional contracts:
+
+- `validation-domain-model-v1.md`: separates Release, Artifact, ValidationRun,
+  Station, StationLease, and HardwareConfig;
+- `station-runtime-interfaces-v1.md`: defines narrow hardware/runtime adapter
+  boundaries;
+- `station-lease-contract-v1.md`: provides exclusive station ownership,
+  heartbeat, expiry, and fencing;
+- `release-manifest-spec-v2-draft.md`: models multi-artifact Embedded Linux
+  releases while Manifest v1 remains supported.
+
+These documents are design contracts. Existing code remains ESP32-specific
+until the M0 implementation backlog is executed.
 
 ---
 
